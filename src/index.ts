@@ -19,7 +19,7 @@ server.registerTool(
     title: 'Search Find Me Gluten Free',
     description:
       'Search findmeglutenfree.com for gluten-free restaurants and businesses ' +
-      'near a given address. Returns a ranked list of matching places with ' +
+      'near a given address or coordinate pair. Returns a ranked list of matching places with ' +
       'ratings, distance, address, gluten-free designation, and a review snippet.',
     inputSchema: {
       q: z
@@ -29,9 +29,30 @@ server.registerTool(
 
       address: z
         .string()
+        .optional()
         .describe(
-          'Near (Address, City, State or Postal Code) — required. ' +
+          'Near (Address, City, State or Postal Code). Provide this OR both lat and lng. ' +
           'e.g. "1600 Pennsylvania Ave NW, Washington, DC 20500" or "Chicago, IL" or "90210"',
+        ),
+
+      lat: z
+        .number()
+        .finite()
+        .min(-90)
+        .max(90)
+        .optional()
+        .describe(
+          'Latitude in decimal degrees, from -90 to 90. Provide this together with lng instead of address when coordinates are already known.',
+        ),
+
+      lng: z
+        .number()
+        .finite()
+        .min(-180)
+        .max(180)
+        .optional()
+        .describe(
+          'Longitude in decimal degrees, from -180 to 180. Provide this together with lat instead of address when coordinates are already known.',
         ),
 
       business_type: z
@@ -82,6 +103,46 @@ server.registerTool(
     },
   },
   async (args) => {
+    const hasAddress = typeof args.address === 'string' && args.address.trim().length > 0;
+    const hasLat = typeof args.lat === 'number';
+    const hasLng = typeof args.lng === 'number';
+
+    if (hasAddress && (hasLat || hasLng)) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text:
+              'Error: Provide either address or lat/lng, not both. ' +
+              'Use address for automatic geocoding, or supply both coordinates directly.',
+          },
+        ],
+      };
+    }
+
+    if (!hasAddress && !(hasLat && hasLng)) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text:
+              'Error: A location is required. Provide either address, or both lat and lng decimal coordinates.',
+          },
+        ],
+      };
+    }
+
+    if (!hasAddress && hasLat !== hasLng) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: 'Error: lat and lng must be provided together when using coordinates.',
+          },
+        ],
+      };
+    }
+
     // Guard: features that require login
     if (args.sort === 'Last Reviewed' && !client.isLoggedIn) {
       return {
@@ -119,16 +180,28 @@ server.registerTool(
 
     let results: SearchResult[];
     try {
-      results = await client.search({
+      const searchParams = {
         q:           args.q,
-        address:     args.address,
         local:       args.business_type      === 'Local Businesses Only',
         dedicated:   args.gluten_free_filter === 'Dedicated Gluten-Free',
         menu:        args.gluten_free_filter === 'Gluten-Free Menus',
         cf:          args.gluten_free_filter === 'Most Celiac Friendly',
         sort:        sortMap[args.sort ?? 'Best Match'],
         maxDistance: args.max_distance,
-      });
+      };
+
+      results = await client.search(
+        hasAddress
+          ? {
+              ...searchParams,
+              address: args.address!.trim(),
+            }
+          : {
+              ...searchParams,
+              lat: args.lat!,
+              lng: args.lng!,
+            },
+      );
     } catch (err) {
       return {
         content: [
