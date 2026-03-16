@@ -1,8 +1,11 @@
 {
   "name": "@skylerwlewis/fmgf-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server for searching findmeglutenfree.com",
   "main": "dist/index.js",
+  "bin": {
+    "fmgf-mcp": "dist/index.js"
+  },
   "type": "module",
   "scripts": {
     "build": "tsc",
