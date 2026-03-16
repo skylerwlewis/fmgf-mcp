@@ -1,5 +1,5 @@
 {
-  "name": "fmgf-mcp",
+  "name": "@skylerwlewis/fmgf-mcp",
   "version": "1.0.0",
   "description": "MCP server for searching findmeglutenfree.com",
   "main": "dist/index.js",
@@ -10,8 +10,18 @@
     "dev": "tsx src/index.ts"
   },
   "keywords": ["mcp", "gluten-free", "findmeglutenfree"],
-  "author": "",
+  "author": "Skyler Lewis",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/skylerwlewis/fmgf-mcp.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "bugs": {
+    "url": "https://github.com/skylerwlewis/fmgf-mcp/issues"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
     "axios": "^1.13.6",
