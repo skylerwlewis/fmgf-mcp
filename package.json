@@ -1,6 +1,6 @@
 {
   "name": "@skylerwlewis/fmgf-mcp",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "MCP server for searching findmeglutenfree.com",
   "main": "dist/index.js",
   "bin": {
@@ -17,7 +17,7 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "https://github.com/skylerwlewis/fmgf-mcp.git"
+    "url": "git+https://github.com/skylerwlewis/fmgf-mcp.git"
   },
   "publishConfig": {
     "access": "public"
