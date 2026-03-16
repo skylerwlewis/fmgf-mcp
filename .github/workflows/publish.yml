@@ -81,6 +81,21 @@ jobs:
             echo '  }'
             echo '}'
             echo '```'
+            echo 'With login credentials'
+            echo '```json'
+            echo '{'
+            echo '  "mcpServers": {'
+            echo '    "findmeglutenfree": {'
+            echo '      "command": "npx",'
+            printf '      "args": ["-y", "%s"],\n' "${PACKAGE}"
+            echo '      "env": {'
+            echo '        "FMGF_USERNAME": "you@example.com",'
+            echo '        "FMGF_PASSWORD": "your-password"'
+            echo '      }'
+            echo '    }'
+            echo '  }'
+            echo '}'
+            echo '```'
             echo ""
             echo "---"
             echo ""
