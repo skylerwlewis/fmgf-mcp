@@ -47,11 +47,11 @@ export interface SearchParams {
   address: string;
   /** Local Businesses Only — set true to exclude chain restaurants */
   local?: boolean;
-  /** Dedicated Gluten-Free filter */
+  /** Dedicated Gluten-Free filter (mutually exclusive with `menu` and `cf`) */
   dedicated?: boolean;
-  /** Gluten-Free Menus filter */
+  /** Gluten-Free Menus filter (mutually exclusive with `dedicated` and `cf`) */
   menu?: boolean;
-  /** Most Celiac Friendly filter */
+  /** Most Celiac Friendly filter (mutually exclusive with `dedicated` and `menu`) */
   cf?: boolean;
   /** Sort order: "" | "rating" | "distance" | "lastReviewed" */
   sort?: string;
@@ -123,6 +123,16 @@ export class FmgfClient {
    * The `address` is automatically geocoded to lat/lng coordinates.
    */
   async search(params: SearchParams): Promise<SearchResult[]> {
+    const gfFilterCount = [params.dedicated, params.menu, params.cf]
+      .filter(Boolean)
+      .length;
+
+    if (gfFilterCount > 1) {
+      throw new Error(
+        'Invalid filter combination: only one of dedicated, menu, or cf may be set at a time.',
+      );
+    }
+
     const { lat, lng } = await geocodeAddress(params.address);
 
     const url = new URL(`${BASE_URL}/search`);
