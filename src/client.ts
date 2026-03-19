@@ -2,7 +2,6 @@ import axios, { AxiosInstance } from 'axios';
 import { wrapper } from 'axios-cookiejar-support';
 import { CookieJar } from 'tough-cookie';
 import * as cheerio from 'cheerio';
-import { geocodeAddress } from './geocode.js';
 
 const BASE_URL = 'https://www.findmeglutenfree.com';
 
@@ -40,9 +39,13 @@ export interface SearchResult {
   reviewSnippet: string;
 }
 
-interface BaseSearchParams {
+export interface SearchParams {
   /** What are you looking for? (Optional) */
   q?: string;
+  /** Latitude in decimal degrees */
+  lat: number;
+  /** Longitude in decimal degrees */
+  lng: number;
   /** Local Businesses Only — set true to exclude chain restaurants */
   local?: boolean;
   /** Dedicated Gluten-Free filter (mutually exclusive with `menu` and `cf`) */
@@ -56,23 +59,6 @@ interface BaseSearchParams {
   /** Maximum search radius in miles (requires login) */
   maxDistance?: number;
 }
-
-export type SearchParams = BaseSearchParams & (
-  | {
-      /** Near (Address, City, State or Postal Code) */
-      address: string;
-      lat?: never;
-      lng?: never;
-    }
-  | {
-      /** Optional display string for the source location when coordinates are supplied manually */
-      address?: string;
-      /** Latitude in decimal degrees */
-      lat: number;
-      /** Longitude in decimal degrees */
-      lng: number;
-    }
-);
 
 // ── Client ────────────────────────────────────────────────────────────────────
 
@@ -135,7 +121,8 @@ export class FmgfClient {
 
   /**
    * Searches findmeglutenfree.com and returns a list of matching businesses.
-    * Accepts either an address to geocode or manual lat/lng coordinates.
+   * Requires lat/lng coordinates — use your AI model or another geocoding service
+   * to convert addresses to coordinates before calling this method.
    */
   async search(params: SearchParams): Promise<SearchResult[]> {
     const gfFilterCount = [params.dedicated, params.menu, params.cf]
@@ -148,26 +135,9 @@ export class FmgfClient {
       );
     }
 
-    let lat: number;
-    let lng: number;
-
-    if ('address' in params && typeof params.address === 'string' && params.address.trim()) {
-      const coords = await geocodeAddress(params.address);
-      lat = coords.lat;
-      lng = coords.lng;
-    } else if (typeof params.lat === 'number' && typeof params.lng === 'number') {
-      lat = params.lat;
-      lng = params.lng;
-    } else {
-      throw new Error('A location is required. Provide either address, or both lat and lng.');
-    }
-
     const url = new URL(`${BASE_URL}/search`);
-    url.searchParams.set('lat', lat.toString());
-    url.searchParams.set('lng', lng.toString());
-    if ('address' in params && typeof params.address === 'string' && params.address.trim()) {
-      url.searchParams.set('a', params.address);
-    }
+    url.searchParams.set('lat', params.lat.toString());
+    url.searchParams.set('lng', params.lng.toString());
     if (params.q)            url.searchParams.set('q',         params.q);
     if (params.local)        url.searchParams.set('local',     't');
     if (params.dedicated)    url.searchParams.set('dedicated', 't');

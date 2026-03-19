@@ -1,11 +1,11 @@
 # fmgf-mcp
 
-An [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) server that lets AI assistants search [findmeglutenfree.com](https://www.findmeglutenfree.com/) for gluten-free restaurants and businesses near any address or coordinate pair.
+An [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) server that lets AI assistants search [findmeglutenfree.com](https://www.findmeglutenfree.com/) for gluten-free restaurants and businesses near a given coordinate pair.
 
 ## Features
 
-- Searches [findmeglutenfree.com/search](https://www.findmeglutenfree.com/search) with the same filter options available in the website's UI
-- Geocodes addresses automatically using the free [OpenStreetMap Nominatim API](https://nominatim.org/) — no API key required
+- Searches [findmeglutenfree.com/search](https://www.findmeglutenfree.com/search) with filter options similar to those available in the website's UI
+- Accepts `lat` and `lng` coordinates directly — use your AI model or another geocoding source to convert an address to coordinates before calling the tool
 - Optional login support to unlock **Max Distance** filtering and **Last Reviewed** sorting (credentials provided via environment variables)
 - Returns structured results: name, URL, star rating, review count, address, distance, price/category, dedicated-GF status, GF menu items, and a featured review snippet
 
@@ -98,18 +98,14 @@ These parameters match the filter fields on [findmeglutenfree.com/search](https:
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `q` | string | No | — | **What are you looking for? (Optional)** — e.g. `"pizza"`, `"Thai food"`, `"bakery"` |
-| `address` | string | Conditionally | — | **Near (Address, City, State or Postal Code)**. Provide this OR both `lat` and `lng` — e.g. `"1600 Pennsylvania Ave NW, Washington, DC 20500"` or `"Chicago, IL"` |
-| `lat` | number | Conditionally | — | Latitude in decimal degrees from `-90` to `90`. Provide together with `lng` instead of `address` when coordinates are already known. |
-| `lng` | number | Conditionally | — | Longitude in decimal degrees from `-180` to `180`. Provide together with `lat` instead of `address` when coordinates are already known. |
+| `lat` | number | **Yes** | — | Latitude in decimal degrees from `-90` to `90`. |
+| `lng` | number | **Yes** | — | Longitude in decimal degrees from `-180` to `180`. |
 | `business_type` | enum | No | `"Chains and Local Businesses"` | `"Chains and Local Businesses"` or `"Local Businesses Only"` |
 | `gluten_free_filter` | enum | No | `"Show All Businesses"` | `"Show All Businesses"` · `"Dedicated Gluten-Free"` · `"Gluten-Free Menus"` · `"Most Celiac Friendly"` |
 | `sort` | enum | No | `"Best Match"` | `"Best Match"` · `"Rating"` · `"Distance"` · `"Last Reviewed"` *(requires login)* |
 | `max_distance` | integer (miles) | No | — | Maximum search radius in miles *(requires login)*. UI presets: 1, 2, 5, 10, 15, 20, 25, 50 — any positive integer accepted. |
 
-Exactly one location mode is required per request:
-
-- Use `address` for automatic geocoding.
-- Or use both `lat` and `lng` to skip geocoding and search by coordinates directly.
+Both `lat` and `lng` are required for every search. If you only have a street address or city name, ask your AI model to convert it to decimal coordinates first.
 
 ---
 
