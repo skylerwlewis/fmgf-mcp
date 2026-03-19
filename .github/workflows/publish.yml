@@ -51,7 +51,22 @@ jobs:
           git push origin "v${{ steps.version.outputs.VERSION }}"
 
       - name: Publish to npm
-        run: npm publish --provenance --access public
+        run: |
+          npm publish --provenance --access public || true
+          # npm OIDC Trusted Publishing sometimes exits non-zero with a spurious 401
+          # after the package is already published. Verify the version is actually live.
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          PACKAGE="${{ steps.version.outputs.PACKAGE }}"
+          for i in 1 2 3 4 5; do
+            if npm view "${PACKAGE}@${VERSION}" version 2>/dev/null | grep -q "${VERSION}"; then
+              echo "✅ ${PACKAGE}@${VERSION} is live on npm."
+              exit 0
+            fi
+            echo "Waiting for npm registry to reflect publish (attempt ${i}/5)..."
+            sleep 10
+          done
+          echo "❌ ${PACKAGE}@${VERSION} not found on npm after publish."
+          exit 1
 
       - name: Create GitHub Release
         env:
